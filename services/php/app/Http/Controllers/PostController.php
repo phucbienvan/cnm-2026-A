@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\Post\CreateRequest;
+use App\Http\Resources\PostResource;
 use App\Models\Post;
 use Illuminate\Http\Request;
 
@@ -13,7 +14,8 @@ class PostController extends Controller
         $posts = Post::orderByDesc('id')->get();
 
         return response()->json([
-            'data' => $posts
+            'data' => PostResource::collection($posts),
+            'message' => 'lấy bài viết thành công',
         ], 200);
     }
 
@@ -27,7 +29,7 @@ class PostController extends Controller
         
         return response()->json([
             'message' => 'Thêm bài viết thành công',
-            'data' => $data
+            'data' => new PostResource($data)
         ], 200);
     }
 
@@ -35,7 +37,7 @@ class PostController extends Controller
     {        
         return response()->json([
             'message' => 'lấy bài viết thành công',
-            'data' => $post
+            'data' => new PostResource($post)
         ], 200);
     }
 
