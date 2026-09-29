@@ -49,4 +49,19 @@ class PostController extends Controller
             'message' => 'Xóa bài viết thành công'
         ], 200);
     }
+
+    public function update(CreateRequest $request, Post $post)
+{
+    $input = $request->validated();
+
+    $post->update([
+        'title' => $input['title'],
+        'content' => $input['content'],
+    ]);
+
+    return response()->json([
+        'message' => 'Cập nhật thành công',
+        'data' => new PostResource($post),
+    ], 200);
+}
 }
