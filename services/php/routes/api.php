@@ -16,3 +16,9 @@ Route::delete('/posts/{post}', [PostController::class, 'destroy'])->missing(func
         'message' => 'Không tìm thấy bài viết',
     ], 404);
 });
+
+Route::put('/users/{user}', [\App\Http\Controllers\UserController::class, 'update'])->missing(function () {
+    return response()->json([
+        'message' => 'Không tìm thấy người dùng',
+    ], 404);
+});
