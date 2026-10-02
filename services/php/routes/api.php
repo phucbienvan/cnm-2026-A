@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\PostController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/posts', [PostController::class, 'index']);
@@ -14,5 +15,11 @@ Route::get('/posts/{post}', [PostController::class, 'show'])->missing(function (
 Route::delete('/posts/{post}', [PostController::class, 'destroy'])->missing(function () {
     return response()->json([
         'message' => 'Không tìm thấy bài viết',
+    ], 404);
+});
+
+Route::put('/users/{user}', [UserController::class, 'update'])->missing(function () {
+    return response()->json([
+        'message' => 'Không tìm thấy người dùng',
     ], 404);
 });

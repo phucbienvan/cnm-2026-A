@@ -23,7 +23,7 @@ Cài dependency Laravel trước khi build vì Dockerfile Sail nằm trong `vend
 ```sh
 composer --working-dir=services/php install
 docker compose up -d --build
-docker compose exec php php artisan key:generate
+ 
 docker compose exec php php artisan migrate
 docker compose exec php npm install
 docker compose exec php npm run build
