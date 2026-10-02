@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\User\UpdateRequest;
 use App\Models\User;
-use Illuminate\Http\Request;
 
 class UserController extends Controller
 {
@@ -14,5 +14,18 @@ class UserController extends Controller
             'name' => $user->name,
             'message' => 'Hello',
         ]);
+    }
+
+    public function update(UpdateRequest $request, User $user)
+    {
+        $user->update($request->validated());
+
+        return response()->json([
+            'message' => 'Cập nhật người dùng thành công',
+            'data' => [
+                'id' => $user->id,
+                'name' => $user->name,
+            ],
+        ], 200);
     }
 }
