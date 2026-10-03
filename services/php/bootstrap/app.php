@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Middleware\CheckApiKey;
+use App\Http\Middleware\CusCheck;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -14,7 +16,8 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
-            'cus.check' => \App\Http\Middleware\CusCheck::class,
+            'check.api.key' => CheckApiKey::class,
+            'cus.check' => CusCheck::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
