@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\Post\CreateRequest;
 use App\Http\Resources\PostResource;
+use App\Http\Requests\Post\UpdateRequest;
 use App\Models\Post;
 use Illuminate\Http\Request;
 
@@ -37,6 +38,20 @@ class PostController extends Controller
     {        
         return response()->json([
             'message' => 'lấy bài viết thành công',
+            'data' => new PostResource($post)
+        ], 200);
+    }
+
+    public function update(UpdateRequest $request, Post $post)
+    {
+        $input = $request->validated();
+        $post->update([
+            'title' => $input['title'],
+            'content' => $input['content'],
+        ]);
+
+        return response()->json([
+            'message' => 'Cập nhật bài viết thành công',
             'data' => new PostResource($post)
         ], 200);
     }
