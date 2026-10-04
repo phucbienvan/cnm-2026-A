@@ -1,5 +1,9 @@
 <?php
 
+/**
+ * @author Võ Đức Phú
+ */
+
 namespace App\Http\Middleware;
 
 use Closure;
@@ -11,7 +15,8 @@ class CusCheck
     /**
      * Handle an incoming request.
      *
-     * @param  Closure(Request): (Response)  $next
+     * Middleware tùy chỉnh – hiện tại cho phép tất cả request đi qua.
+     * Mở rộng logic kiểm tra tại đây khi cần.
      */
     public function handle(Request $request, Closure $next): Response
     {
