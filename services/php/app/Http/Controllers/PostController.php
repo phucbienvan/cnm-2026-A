@@ -49,4 +49,22 @@ class PostController extends Controller
             'message' => 'Xóa bài viết thành công'
         ], 200);
     }
+
+    public function update(Request $request, $id)
+    {
+        $post = Post::findOrFail($id);
+
+        $validatedData = $request->validate([
+            'title'   => 'sometimes|required|string|max:255',
+            'content' => 'sometimes|required|string',
+        ]);
+
+        $post->update($validatedData);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Cập nhật bài viết thành công!',
+            'data'    => $post
+        ], 200);
+    }
 }
