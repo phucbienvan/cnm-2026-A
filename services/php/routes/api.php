@@ -16,3 +16,4 @@ Route::delete('/posts/{post}', [PostController::class, 'destroy'])->missing(func
         'message' => 'Không tìm thấy bài viết',
     ], 404);
 });
+Route::put('/posts/{id}', [PostController::class, 'update']);
