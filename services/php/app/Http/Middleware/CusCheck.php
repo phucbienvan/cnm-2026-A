@@ -9,9 +9,7 @@ use Symfony\Component\HttpFoundation\Response;
 class CusCheck
 {
     /**
-     * Handle an incoming request.
-     *
-     * @param  Closure(Request): (Response)  $next
+     * Xử lý request qua CusCheck middleware.
      */
     public function handle(Request $request, Closure $next): Response
     {

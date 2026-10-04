@@ -8,16 +8,17 @@ use Illuminate\Http\Resources\Json\JsonResource;
 class PostResource extends JsonResource
 {
     /**
-     * Transform the resource into an array.
+     * Chuyển đổi resource Post thành mảng dữ liệu phản hồi JSON.
      *
-     * @return array<string, mixed>
+     * @return array{id: mixed, title: mixed, content: mixed}
      */
     public function toArray(Request $request): array
     {
         return [
-            'id' => $this->id,
-            'title' => $this->title,
-            'content' => $this->content,
+            'id' => $this->resource->id,
+            'title' => $this->resource->title,
+            'content' => $this->resource->content,
         ];
     }
 }
+
