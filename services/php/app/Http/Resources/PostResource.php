@@ -5,19 +5,58 @@ namespace App\Http\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class PostResource extends JsonResource
+class PostController extends Controller
 {
-    /**
-     * Transform the resource into an array.
-     *
-     * @return array<string, mixed>
-     */
-    public function toArray(Request $request): array
+    public function index()
+    {        
+        $posts = Post::orderByDesc('id')->get();
+
+        return response()->json([
+            'data' => PostResource::collection($posts),
+            'message' => 'Lấy bài viết thành công',
+        ], 200);
+    }
+
+    public function store(CreateRequest $request)
     {
-        return [
-            'id' => $this->id,
-            'title' => $this->title,
-            'content' => $this->content,
-        ];
+        $input = $request->validated();
+        $data = Post::create([
+            'title' => $input['title'],
+            'content' => $input['content'],
+        ]);
+        
+        return response()->json([
+            'message' => 'Thêm bài viết thành công',
+            'data' => new PostResource($data)
+        ], 200);
+    }
+
+    public function show(Post $post)
+    {        
+        return response()->json([
+            'message' => 'Lấy bài viết thành công',
+            'data' => new PostResource($post)
+        ], 200);
+    }
+
+    public function update(UpdateRequest $request, Post $post)
+    {
+        $input = $request->validated();
+
+        $post->update($input);
+
+        return response()->json([
+            'message' => 'Cập nhật bài viết thành công',
+            'data' => new PostResource($post)
+        ], 200);
+    }
+
+    public function destroy(Post $post)
+    {
+        $post->delete();
+        
+        return response()->json([
+            'message' => 'Xóa bài viết thành công'
+        ], 200);
     }
 }
