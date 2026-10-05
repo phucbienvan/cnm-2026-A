@@ -40,6 +40,16 @@ class PostController extends Controller
             'data' => new PostResource($post)
         ], 200);
     }
+     public function update(UpdateRequest $request, Post $post)
+    {
+        $input = $request->validated();
+        $post->update($input);
+
+        return response()->json([
+            'message' => 'Cập nhật bài viết thành công',
+            'data' => new PostResource($post)
+        ], 200);
+    }
 
     public function destroy(Post $post)
     {
