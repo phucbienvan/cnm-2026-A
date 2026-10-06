@@ -15,4 +15,11 @@ class UserController extends Controller
             'message' => 'Hello',
         ]);
     }
+
+    public function getUser(Request $request)
+    {
+        $user = $request->user();
+
+        return response()->json($user);
+    }
 }
