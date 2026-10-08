@@ -9,6 +9,8 @@ services/
 
 ## Chạy môi trường phát triển
 
+> 📌 Chi tiết xem tại file **[HUONG_DAN_CHAY_DU_AN.md](HUONG_DAN_CHAY_DU_AN.md)**.
+
 Chạy các lệnh Docker Compose từ thư mục gốc. Cần Docker Compose v2.
 
 Lần đầu clone, tạo cấu hình (bỏ qua nếu các file đã tồn tại):

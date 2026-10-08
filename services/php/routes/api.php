@@ -18,6 +18,11 @@ Route::get('/posts/{post}', [PostController::class, 'show'])->missing(function (
         'message' => 'Không tìm thấy bài viết',
     ], 404);
 });
+Route::put('/posts/{post}', [PostController::class, 'update'])->missing(function () {
+    return response()->json([
+        'message' => 'Không tìm thấy bài viết',
+    ], 404);
+});
 
 Route::delete('/posts/{post}', [PostController::class, 'destroy'])->missing(function () {
     return response()->json([
