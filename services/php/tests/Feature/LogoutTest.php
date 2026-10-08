@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
 
@@ -14,7 +15,18 @@ class LogoutTest extends TestCase
 
     public function beforeRefreshingDatabase(): void
     {
-        config(['database.default' => 'sqlite', 'database.connections.sqlite.database' => ':memory:']);
+        config([
+            'database.default' => 'sqlite',
+            'database.connections.sqlite.driver' => 'sqlite',
+            'database.connections.sqlite.url' => null,
+            'database.connections.sqlite.database' => ':memory:',
+        ]);
+
+        DB::purge('sqlite');
+        $connection = DB::connection('sqlite');
+
+        $this->assertSame('sqlite', $connection->getDriverName(), 'Logout tests must use SQLite.');
+        $this->assertSame(':memory:', $connection->getDatabaseName(), 'Logout tests must use an in-memory database.');
     }
 
     public function test_logout_revokes_only_the_current_token_and_prevents_reuse(): void
