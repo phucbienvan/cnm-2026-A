@@ -8,4 +8,5 @@ Route::get('/', function () {
 })->middleware('cus.check');
 
 Route::get('/users/{user}', [UserController::class, 'index']);
- 
+Route::view('/login', 'auth.login')->name('login');
+Route::view('/account', 'auth.account')->name('account');
