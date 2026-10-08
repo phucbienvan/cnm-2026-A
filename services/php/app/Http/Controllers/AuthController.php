@@ -32,13 +32,13 @@ class AuthController extends Controller
 
         $user = User::where('email', $input['email'])->first();
 
-        if (! $user) {
+        if (!$user) {
             return response()->json([
                 'message' => 'email or password incorrect',
             ], 401);
         }
 
-        if (! Hash::check($input['password'], $user->password)) {
+        if (!Hash::check($input['password'], $user->password)) {
             return response()->json([
                 'message' => 'email or password incorrect',
             ], 401);
@@ -60,10 +60,11 @@ class AuthController extends Controller
         ]);
     }
 
-    public function getUser(Request $request): JsonResponse
+    public function getUser(Request $request)
     {
         $user = $request->user();
 
-        return response()->json($user)->header('Cache-Control', 'no-store, private');
+        dd($user);
+        return response()->json($user);
     }
 }
