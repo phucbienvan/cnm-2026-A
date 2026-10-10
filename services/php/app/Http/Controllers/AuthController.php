@@ -50,6 +50,16 @@ class AuthController extends Controller
         ]);
     }
 
+    public function logout(Request $request)
+    {
+        // Xóa đúng token đang dùng để gọi request này (chỉ đăng xuất thiết bị hiện tại)
+        $request->user()->currentAccessToken()->delete();
+
+        return response()->json([
+            'message' => 'Logged out successfully',
+        ]);
+    }
+
     public function getUser(Request $request)
     {
         $user = $request->user();
