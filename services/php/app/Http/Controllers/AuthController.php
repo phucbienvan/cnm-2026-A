@@ -31,13 +31,13 @@ class AuthController extends Controller
 
         $user = User::where('email', $input['email'])->first();
 
-        if (!$user) {
+        if (! $user) {
             return response()->json([
                 'message' => 'email or password incorrect',
             ], 401);
         }
 
-        if (!Hash::check($input['password'], $user->password)) {
+        if (! Hash::check($input['password'], $user->password)) {
             return response()->json([
                 'message' => 'email or password incorrect',
             ], 401);
@@ -54,7 +54,15 @@ class AuthController extends Controller
     {
         $user = $request->user();
 
-        dd($user);
         return response()->json($user);
+    }
+
+    public function logout(Request $request)
+    {
+        $request->user()->currentAccessToken()->delete();
+
+        return response()->json([
+            'message' => 'Logged out successfully',
+        ]);
     }
 }
