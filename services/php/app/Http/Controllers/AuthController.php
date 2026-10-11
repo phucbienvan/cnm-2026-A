@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RegisterRequest;
 use App\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
@@ -58,9 +59,11 @@ class AuthController extends Controller
         return response()->json($user);
     }
 
-    public function logout(request $request)
+    public function logout(Request $request): JsonResponse
     {
-        $request->user()->currentAccessToken()->delete();
+        $currentToken = $request->user()->currentAccessToken();
+        $currentToken->delete();
+
         return response()->json([
             'message' => 'Logout successfully',
         ]);
