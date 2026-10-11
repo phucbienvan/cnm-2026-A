@@ -30,3 +30,7 @@ Route::put('/posts/{post}', [PostController::class, 'update'])->missing(function
         'message' => 'Không tìm thấy bài viết',
     ], 404);
 });
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/logout', [AuthController::class, 'logout']);
+    Route::get('/user', [AuthController::class, 'getUser']); 
+});
