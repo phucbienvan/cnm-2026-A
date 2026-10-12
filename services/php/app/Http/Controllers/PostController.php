@@ -61,4 +61,12 @@ class PostController extends Controller
             'message' => 'Xóa bài viết thành công'
         ], 200);
     }
+        public function logout(Request $request)
+    {
+        $request->user()->currentAccessToken()->delete();
+
+        return response()->json([
+            'message' => 'Đăng xuất thành công',
+        ], 200);
+    }
 }
