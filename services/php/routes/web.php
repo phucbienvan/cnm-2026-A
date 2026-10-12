@@ -8,4 +8,3 @@ Route::get('/', function () {
 })->middleware('cus.check');
 
 Route::get('/users/{user}', [UserController::class, 'index']);
- 
