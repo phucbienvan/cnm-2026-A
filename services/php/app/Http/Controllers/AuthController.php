@@ -6,7 +6,9 @@ use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RegisterRequest;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Laravel\Sanctum\PersonalAccessToken;
 
 class AuthController extends Controller
 {
@@ -52,9 +54,25 @@ class AuthController extends Controller
 
     public function getUser(Request $request)
     {
-        $user = $request->user();
+        return response()->json($request->user());
+    }
 
-        dd($user);
-        return response()->json($user);
+    public function logout(Request $request)
+    {
+        $token = $request->bearerToken();
+
+        if ($token) {
+            $accessToken = PersonalAccessToken::findToken($token);
+
+            if ($accessToken) {
+                $accessToken->delete();
+            }
+        }
+
+        Auth::guard('sanctum')->forgetUser();
+
+        return response()->json([
+            'message' => 'Logged out successfully',
+        ]);
     }
 }
