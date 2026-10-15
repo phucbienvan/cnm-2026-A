@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Route;
 // Các route xác thực không cần đăng nhập
 Route::post('register', [AuthController::class, 'register']);
 Route::post('verify-mail', [AuthController::class, 'verifyMail']);
+Route::post('resend-mail', [AuthController::class, 'resendMail']);
 Route::post('login', [AuthController::class, 'login']);
 
 Route::middleware('auth:sanctum')->group(function () {
@@ -29,6 +30,11 @@ Route::delete('/posts/{post}', [PostController::class, 'destroy'])->missing(func
     ], 404);
 });
 
+Route::put('/users/{user}', [\App\Http\Controllers\UserController::class, 'update'])->missing(function () {
+    return response()->json([
+        'message' => 'Không tìm thấy người dùng',
+    ], 404);
+});
 Route::put('/posts/{post}', [PostController::class, 'update'])->missing(function () {
     return response()->json([
         'message' => 'Không tìm thấy bài viết',
