@@ -24,7 +24,6 @@ class VerfiyMailRequest extends FormRequest
     {
         return [
             'email' => 'required|email',
-            'code' => 'required|min:6',
         ];
     }
 }
