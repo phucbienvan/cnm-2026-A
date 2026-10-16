@@ -5,11 +5,15 @@ namespace App\Http\Controllers;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RegisterRequest;
 use App\Http\Requests\Auth\VerfiyMailRequest;
-use App\Models\User;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 use App\Mail\VerfifyCodeRegister;
+use App\Models\User;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Throwable;
 
 class AuthController extends Controller
 {
@@ -32,6 +36,58 @@ class AuthController extends Controller
         return response()->json([
             'message' => 'User created successfully',
         ]);
+    }
+
+    public function resendMail(LoginRequest $request): JsonResponse
+    {
+        $input = $request->validated();
+
+        try {
+            return DB::transaction(function () use ($input): JsonResponse {
+                $user = User::where('email', $input['email'])->lockForUpdate()->first();
+
+                if (! $user || ! Hash::check($input['password'], $user->password)) {
+                    return response()->json([
+                        'message' => 'email or password incorrect',
+                    ], 401);
+                }
+
+                if ($user->email_verified_at) {
+                    return response()->json([
+                        'message' => 'email already verified',
+                    ], 409);
+                }
+
+                $retryAfter = $user->expired_verify_email
+                    ? $user->expired_verify_email->copy()->subMinutes(10)->addMinute()->timestamp - now()->timestamp
+                    : 0;
+
+                if ($retryAfter > 0) {
+                    return response()->json([
+                        'message' => 'Too many requests. Please try again later.',
+                    ], 429)->header('Retry-After', (string) $retryAfter);
+                }
+
+                $code = (string) random_int(100000, 999999);
+
+                $user->update([
+                    'code_verify_email' => Hash::make($code),
+                    'expired_verify_email' => now()->addMinutes(10),
+                ]);
+
+                Mail::to($user->email)->queue(new VerfifyCodeRegister($code, $user->name));
+
+                return response()->json([
+                    'message' => 'Verification email queued successfully',
+                ], 202);
+            });
+        } catch (Throwable) {
+            Log::error('Unable to queue verification email.');
+
+            return response()->json([
+                'message' => 'Unable to queue verification email. Please try again later.',
+            ], 503);
+        }
     }
 
     public function verifyMail(VerfiyMailRequest $request)
