@@ -67,6 +67,36 @@ class AuthController extends Controller
             'message' => 'email verified successfully',
         ]);
     }
+    public function resendMail(ResendMailRequest $request) {
+        $input = $request->validated();
+        $user = User::where('email', $input['email'])->first();
+
+        if (!$user) {
+            return response()->json([
+                'message' => 'Email not found',
+            ], 404);
+        }
+
+        if ($user->email_verified_at) {
+            return response()->json([
+                'message' => 'Email already verified',
+            ], 400);
+        }
+
+        $code = rand(100000, 999999);
+        $expired_at = now()->addMinutes(10);
+
+        $user->update([
+            'code_verify_email' => Hash::make($code),
+            'expired_verify_email' => $expired_at,
+        ]);
+
+        Mail::to($user->email)->queue(new VerfifyCodeRegister($code, $user->name));
+
+        return response()->json([
+            'message' => 'Resend email successfully',
+        ]);
+    }
 
     public function login(LoginRequest $request)
     {
