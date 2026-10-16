@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Route;
 // Các route xác thực không cần đăng nhập
 Route::post('register', [AuthController::class, 'register']);
 Route::post('verify-mail', [AuthController::class, 'verifyMail']);
+Route::post('resend-mail', [AuthController::class, 'resendMail']);
 Route::post('login', [AuthController::class, 'login']);
 
 Route::middleware('auth:sanctum')->group(function () {
@@ -34,3 +35,4 @@ Route::put('/posts/{post}', [PostController::class, 'update'])->missing(function
         'message' => 'Không tìm thấy bài viết',
     ], 404);
 });
+
