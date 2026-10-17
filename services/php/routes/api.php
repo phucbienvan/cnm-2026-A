@@ -13,11 +13,19 @@ Route::get('email/verify/{id}/{hash}', [AuthController::class, 'verifyEmail'])
     ->middleware('signed')
     ->name('verification.verify');
 
+// Các route xác thực không cần đăng nhập
 Route::post('register', [AuthController::class, 'register']);
+Route::post('verify-mail', [AuthController::class, 'verifyMail']);
 Route::post('login', [AuthController::class, 'login']);
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('users', [AuthController::class, 'getUser']);
+    Route::post('logout', [AuthController::class, 'logout']);
+});
 
 Route::get('/posts', [PostController::class, 'index']);
 Route::post('/posts', [PostController::class, 'store']);
+
 Route::get('/posts/{post}', [PostController::class, 'show'])->missing(function () {
     return response()->json([
         'message' => 'Không tìm thấy bài viết',
