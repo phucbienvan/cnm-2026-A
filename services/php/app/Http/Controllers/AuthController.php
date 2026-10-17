@@ -18,6 +18,7 @@ class AuthController extends Controller
     {
         $input = $request->validated();
         $code = random_int(100000, 999999);
+        $code = rand(100000, 999999);
         $expired_at = now()->addMinutes(10);
 
         $user = User::create([
@@ -135,4 +136,5 @@ class AuthController extends Controller
             'message' => 'Logged out successfully',
         ]);
     }
+}
 }
