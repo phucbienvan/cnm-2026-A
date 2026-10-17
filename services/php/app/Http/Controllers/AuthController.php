@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RegisterRequest;
+use App\Http\Requests\Auth\ResendMailRequest;
 use App\Http\Requests\Auth\VerfiyMailRequest;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -16,6 +17,7 @@ class AuthController extends Controller
     public function register(RegisterRequest $request)
     {
         $input = $request->validated();
+        $code = random_int(100000, 999999);
         $code = rand(100000, 999999);
         $expired_at = now()->addMinutes(10);
 
@@ -68,6 +70,27 @@ class AuthController extends Controller
         ]);
     }
 
+    public function resendMail(ResendMailRequest $request)
+    {
+        $email = strtolower($request->validated('email'));
+        $user = User::where('email', $email)->first();
+
+        if ($user && !$user->email_verified_at) {
+            $code = random_int(100000, 999999);
+
+            $user->update([
+                'code_verify_email' => Hash::make($code),
+                'expired_verify_email' => now()->addMinutes(10),
+            ]);
+
+            Mail::to($user->email)->queue(new VerfifyCodeRegister($code, $user->name));
+        }
+
+        return response()->json([
+            'message' => 'If the email is eligible, a verification code has been sent.',
+        ], 202);
+    }
+
     public function login(LoginRequest $request)
     {
         $input = $request->validated();
@@ -113,4 +136,5 @@ class AuthController extends Controller
             'message' => 'Logged out successfully',
         ]);
     }
+}
 }
