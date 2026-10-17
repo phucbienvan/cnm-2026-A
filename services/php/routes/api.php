@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Route;
 Route::post('register', [AuthController::class, 'register']);
 Route::post('verify-mail', [AuthController::class, 'verifyMail']);
 Route::post('login', [AuthController::class, 'login']);
+Route::post('resend-verify-mail', [AuthController::class, 'resendVerifyMail']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('users', [AuthController::class, 'getUser']);
