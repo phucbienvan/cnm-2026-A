@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RegisterRequest;
+use App\Http\Requests\Auth\ResendMailRequest;
 use App\Http\Requests\Auth\VerfiyMailRequest;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -16,21 +17,49 @@ class AuthController extends Controller
     public function register(RegisterRequest $request)
     {
         $input = $request->validated();
-        $code = rand(100000, 999999);
-        $expired_at = now()->addMinutes(10);
 
         $user = User::create([
             'name' => $input['name'],
             'email' => $input['email'],
             'password' => $input['password'],
-            'code_verify_email' => Hash::make($code),
-            'expired_verify_email' => $expired_at,
         ]);
 
-        Mail::to($user->email)->queue(new VerfifyCodeRegister($code, $user->name));
+        $this->sendVerifyCode($user);
 
         return response()->json([
             'message' => 'User created successfully',
+        ]);
+    }
+
+    public function resendMail(ResendMailRequest $request)
+    {
+        $input = $request->validated();
+        $user = User::where('email', $input['email'])->first();
+
+        if (!$user) {
+            return response()->json([
+                'message' => 'email not found',
+            ], 404);
+        }
+
+        if ($user->email_verified_at) {
+            return response()->json([
+                'message' => 'email already verified',
+            ], 400);
+        }
+
+        // Mã cũ vẫn còn hạn thì không gửi lại, tránh spam mail
+        if ($user->expired_verify_email?->isFuture()) {
+            return response()->json([
+                'message' => 'code is still valid',
+                'expires_in' => (int) now()->diffInSeconds($user->expired_verify_email, true),
+            ], 400);
+        }
+
+        $this->sendVerifyCode($user);
+
+        return response()->json([
+            'message' => 'verification code resent successfully',
         ]);
     }
 
@@ -112,5 +141,21 @@ class AuthController extends Controller
         return response()->json([
             'message' => 'Logged out successfully',
         ]);
+    }
+
+    /**
+     * Tạo mã xác thực mới (hết hạn sau 10 phút), lưu bản băm vào DB
+     * rồi đưa mail vào queue. Dùng chung cho register và resendMail.
+     */
+    private function sendVerifyCode(User $user): void
+    {
+        $code = (string) random_int(100000, 999999);
+
+        $user->update([
+            'code_verify_email' => Hash::make($code),
+            'expired_verify_email' => now()->addMinutes(10),
+        ]);
+
+        Mail::to($user->email)->queue(new VerfifyCodeRegister($code, $user->name));
     }
 }
