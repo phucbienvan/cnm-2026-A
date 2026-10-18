@@ -1,12 +1,37 @@
 <?php
 
+use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Api\PostController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware('check.api.key')->group(function () {
-    Route::get('/posts', [PostController::class, 'index']);
-    Route::post('/posts', [PostController::class, 'store']);
-    Route::get('/posts/{id}', [PostController::class, 'show']);
-    Route::put('/posts/{id}', [PostController::class, 'update']);
-    Route::delete('/posts/{id}', [PostController::class, 'destroy']);
+// Các route xác thực không cần đăng nhập
+Route::post('register', [AuthController::class, 'register']);
+Route::post('verify-mail', [AuthController::class, 'verifyMail']);
+Route::post('resend-verify-mail', [AuthController::class, 'resendVerifyMail']);
+Route::post('login', [AuthController::class, 'login']);
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('users', [AuthController::class, 'getUser']);
+    Route::post('logout', [AuthController::class, 'logout']);
+});
+
+Route::get('/posts', [PostController::class, 'index']);
+Route::post('/posts', [PostController::class, 'store']);
+
+Route::get('/posts/{post}', [PostController::class, 'show'])->missing(function () {
+    return response()->json([
+        'message' => 'Không tìm thấy bài viết',
+    ], 404);
+});
+
+Route::delete('/posts/{post}', [PostController::class, 'destroy'])->missing(function () {
+    return response()->json([
+        'message' => 'Không tìm thấy bài viết',
+    ], 404);
+});
+
+Route::put('/posts/{post}', [PostController::class, 'update'])->missing(function () {
+    return response()->json([
+        'message' => 'Không tìm thấy bài viết',
+    ], 404);
 });

@@ -15,7 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
-            'check.api.key' => CheckApiKey::class,
+            'cus.check' => \App\Http\Middleware\CusCheck::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
