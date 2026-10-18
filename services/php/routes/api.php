@@ -9,6 +9,7 @@ Route::get('users', [AuthController::class, 'getUser'])->middleware('auth:sanctu
 Route::post('register', [AuthController::class, 'register']);
 Route::post('login', [AuthController::class, 'login']);
 Route::post('logout' , [AuthController::class , 'logout'])->middleware('auth:sanctum');
+Route::post('resend-mail', [AuthController::class, 'resendMail'])->middleware('throttle:3,1');
 
 
 Route::get('/posts', [PostController::class, 'index']);
