@@ -6,7 +6,8 @@ use Illuminate\Support\Facades\Route;
 
 // Các route xác thực không cần đăng nhập
 Route::post('register', [AuthController::class, 'register']);
-Route::post('verify-mail', [AuthController::class, 'verifyMail']);
+Route::post('verify-mail', [AuthController::class, 'verifyMail'])->middleware('throttle:verify-mail');
+Route::post('resend-mail', [AuthController::class, 'resendMail'])->middleware('throttle:resend-mail');
 Route::post('login', [AuthController::class, 'login']);
 
 Route::middleware('auth:sanctum')->group(function () {
