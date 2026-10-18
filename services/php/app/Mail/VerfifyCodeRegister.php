@@ -3,7 +3,6 @@
 namespace App\Mail;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
@@ -20,9 +19,8 @@ class VerfifyCodeRegister extends Mailable
     public function __construct(
         public readonly string $code,
         public readonly string $username,
-    )
-    {
-        //
+    ) {
+        $this->afterCommit();
     }
 
     /**
@@ -31,7 +29,7 @@ class VerfifyCodeRegister extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Verfify Code Register',
+            subject: 'Email verification code',
         );
     }
 

@@ -23,8 +23,8 @@ class VerfiyMailRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'email' => 'required|email',
-            'code' => 'required|min:6',
+            'email' => 'required|string|email|max:255',
+            'code' => 'required|digits:6',
         ];
     }
 }
