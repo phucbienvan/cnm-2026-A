@@ -10,7 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use App\Mail\VerfifyCodeRegister;
 use Illuminate\Support\Facades\Mail;
-
+use App\Http\Requests\Auth\ResendRequest;
 class AuthController extends Controller
 {
     public function register(RegisterRequest $request)
