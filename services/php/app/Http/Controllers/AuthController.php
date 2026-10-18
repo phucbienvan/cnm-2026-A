@@ -4,10 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RegisterRequest;
+use App\Http\Requests\Auth\ResendEmailRequest;
 use App\Http\Requests\Auth\VerfiyMailRequest;
 use App\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use App\Mail\VerfifyCodeRegister;
 use Illuminate\Support\Facades\Mail;
 
@@ -45,7 +48,13 @@ class AuthController extends Controller
             ], 404);
         }
 
-        if ($user->expired_verify_email < now()) {
+        if ($user->email_verified_at) {
+            return response()->json([
+                'message' => 'email already verified',
+            ], 400);
+        }
+
+        if (!$user->code_verify_email || !$user->expired_verify_email || $user->expired_verify_email < now()) {
             return response()->json([
                 'message' => 'code is expired',
             ], 401);
@@ -66,6 +75,38 @@ class AuthController extends Controller
         return response()->json([
             'message' => 'email verified successfully',
         ]);
+    }
+
+    public function resendEmail(ResendEmailRequest $request): JsonResponse
+    {
+        $user = User::where('email', $request->validated('email'))->first();
+        $response = ['message' => 'If the email needs verification, a new code will be sent.'];
+
+        if (!$user || $user->email_verified_at) {
+            return response()->json($response, 202);
+        }
+
+        $code = (string) random_int(100000, 999999);
+
+        try {
+            Mail::to($user->email)->send(new VerfifyCodeRegister($code, $user->name));
+
+            $user->update([
+                'code_verify_email' => Hash::make($code),
+                'expired_verify_email' => now()->addMinutes(10),
+            ]);
+        } catch (\Throwable $exception) {
+            Log::error('Resend verification email failed', [
+                'user_id' => $user->id,
+                'error' => $exception->getMessage(),
+            ]);
+
+            return response()->json([
+                'message' => 'Failed to send verification email.',
+            ], 500);
+        }
+
+        return response()->json($response, 202);
     }
 
     public function login(LoginRequest $request)
