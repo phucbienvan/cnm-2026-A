@@ -28,6 +28,7 @@ class AuthController extends Controller
             'password' => $input['password'],
             'code_verify_email' => Hash::make($code),
             'expired_verify_email' => $expired_at,
+
         ]);
 
         Mail::to($user->email)->queue(new VerfifyCodeRegister($code, $user->name));
