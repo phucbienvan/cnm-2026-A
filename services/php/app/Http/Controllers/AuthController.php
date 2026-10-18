@@ -119,12 +119,13 @@ class AuthController extends Controller
 
         $user = User::where('email', $input['email'])->first();
 
-        if (!$user) {
+        if (! $user) {
             return response()->json([
                 'message' => 'email or password incorrect',
             ], 401);
         }
 
+        if (! Hash::check($input['password'], $user->password)) {
         if (!$user->email_verified_at) {
             return response()->json([
                 'message' => 'email not verified',
@@ -144,10 +145,61 @@ class AuthController extends Controller
         ]);
     }
 
+    public function logout(Request $request)
+    {
+        $user = $request->user();
+
+        if (! $user) {
+            return response()->json([
+                'message' => 'Unauthenticated',
+            ], 401);
+        }
+
+        $request->user()->currentAccessToken()->delete();
+
+        return response()->json([
+            'message' => 'Logged out successfully',
+        ]);
+    }
+
     public function getUser(Request $request)
     {
         $user = $request->user();
 
+        dd($user);
+
+        return response()->json($user);
+    }
+
+    public function resendVerificationEmail(Request $request)
+    {
+        $user = $request->user();
+
+        if ($user->hasVerifiedEmail()) {
+            return response()->json([
+                'message' => 'Email address is already verified.',
+            ]);
+        }
+
+        $user->sendEmailVerificationNotification();
+
+        return response()->json([
+            'message' => 'Verification email sent.',
+        ]);
+    }
+
+    public function verifyEmail(int $id, string $hash)
+    {
+        $user = User::findOrFail($id);
+
+        abort_unless(hash_equals(sha1($user->getEmailForVerification()), $hash), 403);
+
+        if (! $user->hasVerifiedEmail()) {
+            $user->markEmailAsVerified();
+        }
+
+        return response()->json([
+            'message' => 'Email address verified.',
         return response()->json($user);
     }
     public function logout(Request $request)
