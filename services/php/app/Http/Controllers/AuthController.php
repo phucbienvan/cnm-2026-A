@@ -8,7 +8,6 @@ use App\Http\Requests\Auth\ResendMailRequest;
 use App\Http\Requests\Auth\VerfiyMailRequest;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use App\Mail\VerfifyCodeRegister;
 use Illuminate\Support\Facades\Mail;
@@ -72,42 +71,30 @@ class AuthController extends Controller
 
     public function resendMail(ResendMailRequest $request)
     {
-        $email = $request->validated()['email'];
+        $input = $request->validated();
+        $user = User::where('email', $input['email'])->first();
 
-        $result = DB::transaction(function () use ($email): string {
-            $user = User::where('email', $email)->lockForUpdate()->first();
-
-            if (!$user) {
-                return 'not_found';
-            }
-
-            if ($user->email_verified_at !== null) {
-                return 'verified';
-            }
-
-            $code = (string) random_int(100000, 999999);
-
-            $user->update([
-                'code_verify_email' => Hash::make($code),
-                'expired_verify_email' => now()->addMinutes(10),
-            ]);
-
-            Mail::to($user->email)->queue(new VerfifyCodeRegister($code, $user->name));
-
-            return 'resent';
-        });
-
-        if ($result === 'not_found') {
+        if (!$user) {
             return response()->json([
                 'message' => 'email not found',
             ], 404);
         }
 
-        if ($result === 'verified') {
+        if ($user->email_verified_at) {
             return response()->json([
                 'message' => 'email already verified',
             ], 400);
         }
+
+        $code = rand(100000, 999999);
+        $expired_at = now()->addMinutes(10);
+
+        $user->update([
+            'code_verify_email' => Hash::make($code),
+            'expired_verify_email' => $expired_at,
+        ]);
+
+        Mail::to($user->email)->queue(new VerfifyCodeRegister((string) $code, $user->name));
 
         return response()->json([
             'message' => 'verification code resent successfully',
