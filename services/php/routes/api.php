@@ -34,3 +34,6 @@ Route::put('/posts/{post}', [PostController::class, 'update'])->missing(function
         'message' => 'Không tìm thấy bài viết',
     ], 404);
 });
+
+Route::post('resend-verify-mail',[AuthController::class,'resendVerifyMail'])
+    ->middleware('throttle:3,1'); // Giới hạn 3 lần gửi trong 1 phút

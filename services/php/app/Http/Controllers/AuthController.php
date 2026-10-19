@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RegisterRequest;
 use App\Http\Requests\Auth\VerfiyMailRequest;
+use App\Http\Requests\Auth\ResendVerifyMailRequest;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -65,6 +66,34 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'email verified successfully',
+        ]);
+    }
+
+    //resend verify mail
+    public function resendVerifyMail(ResendVerifyMailRequest $request)
+    {
+        $email = $request->validated()['email'];
+        $user = User::where('email', $email)->first();
+
+        $message = 'Nếu email này cần xác minh, một mã mới đã được gửi.';
+
+        if (!$user || $user->email_verified_at) {
+            return response()->json([
+                'message' => $message,
+            ]);
+        }
+
+        $code = rand(100000, 999999);
+
+        $user->update([
+            'code_verify_email' => Hash::make($code),
+            'expired_verify_email' => now()->addMinutes(10),
+        ]);
+
+        Mail::to($user->email)->queue(new VerfifyCodeRegister($code, $user->name));
+
+        return response()->json([
+            'message' => $message,
         ]);
     }
 
