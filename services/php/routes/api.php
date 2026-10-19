@@ -10,6 +10,18 @@ Route::get('users', [AuthController::class, 'getUser'])->middleware('auth:sanctu
 Route::post('register', [AuthController::class, 'register']);
 Route::post('login', [AuthController::class, 'login']);
 
+// Email verification
+Route::get('/email/verify/{id}/{hash}', [AuthController::class, 'verifyEmail'])
+    ->middleware(['signed'])
+    ->name('verification.verify');
+
+Route::post('/email/verification-notification', [AuthController::class, 'resendVerificationEmail'])
+    ->middleware(['throttle:6,1'])
+    ->name('verification.send');
+
+Route::post('/email/resend', [AuthController::class, 'resendVerificationEmail'])
+    ->middleware(['throttle:6,1']);
+
 
 Route::get('/posts', [PostController::class, 'index']);
 Route::post('/posts', [PostController::class, 'store']);
