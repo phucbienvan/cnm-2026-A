@@ -8,10 +8,15 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('users', [AuthController::class, 'getUser']);
     Route::post('logout', [AuthController::class, 'logout']);
+    Route::post('email/resend', [AuthController::class, 'resendEmail'])
+        ->middleware('throttle:6,1');
 });
 
 Route::post('register', [AuthController::class, 'register']);
 Route::post('login', [AuthController::class, 'login']);
+Route::get('email/verify/{id}/{hash}', [AuthController::class, 'verifyEmail'])
+    ->middleware(['signed', 'throttle:6,1'])
+    ->name('verification.verify');
 
 
 Route::get('/posts', [PostController::class, 'index']);
