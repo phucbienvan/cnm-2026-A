@@ -4,9 +4,9 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\PostController;
 use Illuminate\Support\Facades\Route;
 
-// Các route xác thực không cần đăng nhập
 Route::post('register', [AuthController::class, 'register']);
 Route::post('verify-mail', [AuthController::class, 'verifyMail']);
+Route::post('resend-mail', [AuthController::class, 'resendMail'])->middleware('throttle:3,1');
 Route::post('login', [AuthController::class, 'login']);
 
 Route::middleware('auth:sanctum')->group(function () {
