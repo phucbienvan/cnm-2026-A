@@ -6,6 +6,7 @@ use App\Http\Requests\Post\CreateRequest;
 use App\Http\Resources\PostResource;
 use App\Models\Post;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class PostController extends Controller
 {
@@ -24,10 +25,16 @@ class PostController extends Controller
         $input = $request->validated();
         $user = auth()->user();
 
+        $thumbnailPath = null;
+        if ($request->hasFile('thumbnail')) {
+            $thumbnailPath = $request->file('thumbnail')->store('thumbnails', 'public');
+        }
+
         $data = Post::create([
             'title' => $input['title'],
             'content' => $input['content'],
-            'user_id' => $user->id
+            'user_id' => $user->id,
+            'thumbnail' => $thumbnailPath,
         ]);
         
         return response()->json([
@@ -54,6 +61,10 @@ class PostController extends Controller
             ], 403);
         }
 
+        if ($post->thumbnail) {
+            Storage::disk('public')->delete($post->thumbnail);
+        }
+
         $post->delete();
         
         return response()->json([
@@ -71,10 +82,20 @@ class PostController extends Controller
                 'message' => 'Bạn không có quyền sửa bài viết này',
             ], 403);
         }
-        
+
+        $thumbnailPath = $post->thumbnail;
+        if ($request->hasFile('thumbnail')) {
+            // Xóa ảnh cũ nếu có
+            if ($post->thumbnail) {
+                Storage::disk('public')->delete($post->thumbnail);
+            }
+            $thumbnailPath = $request->file('thumbnail')->store('thumbnails', 'public');
+        }
+
         $post->update([
             'title' => $input['title'],
             'content' => $input['content'],
+            'thumbnail' => $thumbnailPath,
         ]);
 
         return response()->json([
