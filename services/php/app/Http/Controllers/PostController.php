@@ -24,10 +24,16 @@ class PostController extends Controller
         $input = $request->validated();
         $user = auth()->user();
 
+        $thumbnail = null;
+        if ($request->hasFile('thumbnail')) {
+            $thumbnail = $request->file('thumbnail')->store('posts', 'public');
+        }
+
         $data = Post::create([
             'title' => $input['title'],
             'content' => $input['content'],
-            'user_id' => $user->id
+            'user_id' => $user->id,
+            'thumbnail' => $thumbnail,
         ]);
         
         return response()->json([
@@ -71,10 +77,16 @@ class PostController extends Controller
                 'message' => 'Bạn không có quyền sửa bài viết này',
             ], 403);
         }
+
+        $thumbnail = $post->thumbnail;
+        if ($request->hasFile('thumbnail')) {
+            $thumbnail = $request->file('thumbnail')->store('posts', 'public');
+        }
         
         $post->update([
             'title' => $input['title'],
             'content' => $input['content'],
+            'thumbnail' => $thumbnail,
         ]);
 
         return response()->json([
