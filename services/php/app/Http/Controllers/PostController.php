@@ -5,12 +5,14 @@ namespace App\Http\Controllers;
 use App\Http\Requests\Post\CreateRequest;
 use App\Http\Resources\PostResource;
 use App\Models\Post;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Request;
+
 
 class PostController extends Controller
 {
     public function index()
-    {        
+    {
         $posts = Post::orderByDesc('id')->get();
 
         return response()->json([
@@ -24,12 +26,16 @@ class PostController extends Controller
         $input = $request->validated();
         $user = auth()->user();
 
+        $thumbnailPath = $request->file('thumbnail')->store('thumbnails', 'public');
+
+
         $data = Post::create([
             'title' => $input['title'],
             'content' => $input['content'],
-            'user_id' => $user->id
+            'user_id' => $user->id,
+            'thumbnail' => $thumbnailPath
         ]);
-        
+
         return response()->json([
             'message' => 'Thêm bài viết thành công',
             'data' => new PostResource($data)
@@ -37,7 +43,7 @@ class PostController extends Controller
     }
 
     public function show(Post $post)
-    {        
+    {
         return response()->json([
             'message' => 'lấy bài viết thành công',
             'data' => new PostResource($post)
@@ -55,7 +61,7 @@ class PostController extends Controller
         }
 
         $post->delete();
-        
+
         return response()->json([
             'message' => 'Xóa bài viết thành công'
         ], 200);
@@ -71,7 +77,7 @@ class PostController extends Controller
                 'message' => 'Bạn không có quyền sửa bài viết này',
             ], 403);
         }
-        
+
         $post->update([
             'title' => $input['title'],
             'content' => $input['content'],
