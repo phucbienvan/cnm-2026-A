@@ -10,7 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use App\Mail\VerfifyCodeRegister;
 use Illuminate\Support\Facades\Mail;
-
+use App\Http\Requests\Auth\ResendRequest;
 class AuthController extends Controller
 {
     public function register(RegisterRequest $request)
@@ -113,4 +113,31 @@ class AuthController extends Controller
             'message' => 'Logged out successfully',
         ]);
     }
+    public function resend(ResendRequest $request)
+{
+    $input = $request->validated();
+
+    $user = User::where('email', $input['email'])->first();
+
+    if ($user->email_verified_at) {
+        return response()->json([
+            'message' => 'Email already verified',
+        ], 400);
+    }
+
+    $code = random_int(100000, 999999);
+
+    $user->update([
+        'code_verify_email' => Hash::make((string) $code),
+        'expired_verify_email' => now()->addMinutes(10),
+    ]);
+
+    Mail::to($user->email)->queue(
+        new VerfifyCodeRegister($code, $user->name)
+    );
+
+    return response()->json([
+        'message' => 'Verification email resent successfully',
+    ], 200);
+}
 }
