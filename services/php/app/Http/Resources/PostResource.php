@@ -22,6 +22,8 @@ class PostResource extends JsonResource
             'thumbnail' => $this->thumbnail
                 ? Storage::disk('public')->url($this->thumbnail)
                 : null,
+            'user_id' => $this->user_id,
+            'user' => new UserResource($this->user),
         ];
     }
 }

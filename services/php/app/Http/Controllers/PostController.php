@@ -24,11 +24,15 @@ class PostController extends Controller
     public function store(CreateRequest $request): JsonResponse
     {
         $input = $request->validated();
+        
+        $user = auth()->user();
         $thumbnailPath = $this->storeThumbnail($request->file('thumbnail'));
+        
         $data = Post::create([
             'title' => $input['title'],
             'content' => $input['content'],
             'thumbnail' => $thumbnailPath,
+            'user_id' => $user->id
         ]);
 
         return response()->json([
@@ -47,6 +51,14 @@ class PostController extends Controller
 
     public function destroy(Post $post)
     {
+        $user = auth()->user();
+
+        if ($user->id != $post->user_id) {
+            return response()->json([
+                'message' => 'Bạn không có quyền xóa bài viết này',
+            ], 403);
+        }
+
         $post->delete();
 
         return response()->json([
@@ -57,6 +69,14 @@ class PostController extends Controller
     public function update(CreateRequest $request, Post $post): JsonResponse
     {
         $input = $request->validated();
+        $user = auth()->user();
+
+        if ($user->id != $post->user_id) {
+            return response()->json([
+                'message' => 'Bạn không có quyền sửa bài viết này',
+            ], 403);
+        }
+
         $oldThumbnailPath = $post->thumbnail;
         $thumbnailPath = $this->storeThumbnail($request->file('thumbnail'));
 
