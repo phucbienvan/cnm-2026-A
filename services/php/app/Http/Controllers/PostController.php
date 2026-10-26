@@ -5,7 +5,10 @@ namespace App\Http\Controllers;
 use App\Http\Requests\Post\CreateRequest;
 use App\Http\Resources\PostResource;
 use App\Models\Post;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Request;
+use Throwable;
 
 class PostController extends Controller
 {
@@ -23,12 +26,30 @@ class PostController extends Controller
     {
         $input = $request->validated();
         $user = auth()->user();
+        $thumbnailPath = null;
 
-        $data = Post::create([
-            'title' => $input['title'],
-            'content' => $input['content'],
-            'user_id' => $user->id
-        ]);
+        try {
+            if ($request->hasFile('thumbnail')) {
+                $storedPath = $request->file('thumbnail')->store('posts/thumbnails', 'public');
+                if (! is_string($storedPath)) {
+                    throw new \RuntimeException('Unable to store post thumbnail.');
+                }
+                $thumbnailPath = $storedPath;
+            }
+
+            $data = DB::transaction(fn () => Post::create([
+                'title' => $input['title'],
+                'content' => $input['content'],
+                'user_id' => $user->id,
+                'thumbnail' => $thumbnailPath,
+            ]));
+        } catch (Throwable $exception) {
+            if (is_string($thumbnailPath)) {
+                Storage::disk('public')->delete($thumbnailPath);
+            }
+
+            throw $exception;
+        }
         
         return response()->json([
             'message' => 'Thêm bài viết thành công',
@@ -71,11 +92,37 @@ class PostController extends Controller
                 'message' => 'Bạn không có quyền sửa bài viết này',
             ], 403);
         }
-        
-        $post->update([
-            'title' => $input['title'],
-            'content' => $input['content'],
-        ]);
+
+        $oldThumbnailPath = $post->thumbnail;
+        $newThumbnailPath = null;
+
+        try {
+            if ($request->hasFile('thumbnail')) {
+                $storedPath = $request->file('thumbnail')->store('posts/thumbnails', 'public');
+                if (! is_string($storedPath)) {
+                    throw new \RuntimeException('Unable to store post thumbnail.');
+                }
+                $newThumbnailPath = $storedPath;
+            }
+
+            DB::transaction(function () use ($input, $post, $newThumbnailPath): void {
+                $post->update([
+                    'title' => $input['title'],
+                    'content' => $input['content'],
+                    'thumbnail' => $newThumbnailPath ?? $post->thumbnail,
+                ]);
+            });
+        } catch (Throwable $exception) {
+            if (is_string($newThumbnailPath)) {
+                Storage::disk('public')->delete($newThumbnailPath);
+            }
+
+            throw $exception;
+        }
+
+        if ($newThumbnailPath !== null && $oldThumbnailPath !== null) {
+            Storage::disk('public')->delete($oldThumbnailPath);
+        }
 
         return response()->json([
             'message' => 'Cập nhật bài viết thành công',
