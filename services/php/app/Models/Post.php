@@ -2,18 +2,17 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
 
+#[Fillable(['title', 'content', 'user_id', 'thumbnail'])]
 class Post extends Model
 {
-    use HasFactory;
     use SoftDeletes;
 
-    protected $fillable = [
-        'title',
-        'content',
-        'status',
-    ];
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }
