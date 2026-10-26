@@ -6,6 +6,7 @@ use App\Http\Requests\Post\CreateRequest;
 use App\Http\Resources\PostResource;
 use App\Models\Post;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class PostController extends Controller
 {
@@ -24,10 +25,16 @@ class PostController extends Controller
         $input = $request->validated();
         $user = auth()->user();
 
+        $thumbnailPath = null;
+        if ($request->hasFile('thumbnail')) {
+            $thumbnailPath = $request->file('thumbnail')->store('posts', 'local');
+        }
+
         $data = Post::create([
             'title' => $input['title'],
             'content' => $input['content'],
-            'user_id' => $user->id
+            'user_id' => $user->id,
+            'thumbnail' => $thumbnailPath,
         ]);
         
         return response()->json([
@@ -71,11 +78,20 @@ class PostController extends Controller
                 'message' => 'Bạn không có quyền sửa bài viết này',
             ], 403);
         }
-        
-        $post->update([
+
+        $updateData = [
             'title' => $input['title'],
             'content' => $input['content'],
-        ]);
+        ];
+
+        if ($request->hasFile('thumbnail')) {
+            if ($post->thumbnail && Storage::disk('local')->exists($post->thumbnail)) {
+                Storage::disk('local')->delete($post->thumbnail);
+            }
+            $updateData['thumbnail'] = $request->file('thumbnail')->store('posts', 'local');
+        }
+        
+        $post->update($updateData);
 
         return response()->json([
             'message' => 'Cập nhật bài viết thành công',
