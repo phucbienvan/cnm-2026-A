@@ -6,6 +6,7 @@ use App\Http\Requests\Post\CreateRequest;
 use App\Http\Resources\PostResource;
 use App\Models\Post;
 use Illuminate\Http\Request;
+use RuntimeException;
 
 class PostController extends Controller
 {
@@ -23,11 +24,13 @@ class PostController extends Controller
     {
         $input = $request->validated();
         $user = auth()->user();
+        $thumbnailPath = $this->storeThumbnail($request);
 
         $data = Post::create([
             'title' => $input['title'],
             'content' => $input['content'],
-            'user_id' => $user->id
+            'thumbnail' => $thumbnailPath,
+            'user_id' => $user->id,
         ]);
         
         return response()->json([
@@ -72,14 +75,37 @@ class PostController extends Controller
             ], 403);
         }
         
-        $post->update([
+        $attributes = [
             'title' => $input['title'],
             'content' => $input['content'],
-        ]);
+        ];
+
+        if ($request->hasFile('thumbnail')) {
+            $attributes['thumbnail'] = $this->storeThumbnail($request);
+        }
+
+        $post->update($attributes);
 
         return response()->json([
             'message' => 'Cập nhật bài viết thành công',
             'data' => new PostResource($post),
         ], 200);
+    }
+
+    private function storeThumbnail(CreateRequest $request): ?string
+    {
+        $thumbnail = $request->file('thumbnail');
+
+        if ($thumbnail === null) {
+            return null;
+        }
+
+        $path = $thumbnail->store('posts', 'public');
+
+        if ($path === false) {
+            throw new RuntimeException('Unable to store post thumbnail.');
+        }
+
+        return $path;
     }
 }
