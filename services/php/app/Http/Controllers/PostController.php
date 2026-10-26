@@ -5,12 +5,13 @@ namespace App\Http\Controllers;
 use App\Http\Requests\Post\CreateRequest;
 use App\Http\Resources\PostResource;
 use App\Models\Post;
-use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Throwable;
 
 class PostController extends Controller
 {
     public function index()
-    {        
+    {
         $posts = Post::orderByDesc('id')->get();
 
         return response()->json([
@@ -24,23 +25,36 @@ class PostController extends Controller
         $input = $request->validated();
         $user = auth()->user();
 
-        $data = Post::create([
-            'title' => $input['title'],
-            'content' => $input['content'],
-            'user_id' => $user->id
-        ]);
-        
+        $thumbnail = $request->hasFile('thumbnail')
+            ? $request->file('thumbnail')->store('posts', 'public')
+            : null;
+
+        try {
+            $data = Post::create([
+                'title' => $input['title'],
+                'content' => $input['content'],
+                'user_id' => $user->id,
+                'thumbnail' => $thumbnail,
+            ]);
+        } catch (Throwable $e) {
+            if ($thumbnail) {
+                Storage::disk('public')->delete($thumbnail);
+            }
+
+            throw $e;
+        }
+
         return response()->json([
             'message' => 'Thêm bài viết thành công',
-            'data' => new PostResource($data)
+            'data' => new PostResource($data),
         ], 200);
     }
 
     public function show(Post $post)
-    {        
+    {
         return response()->json([
             'message' => 'lấy bài viết thành công',
-            'data' => new PostResource($post)
+            'data' => new PostResource($post),
         ], 200);
     }
 
@@ -55,9 +69,9 @@ class PostController extends Controller
         }
 
         $post->delete();
-        
+
         return response()->json([
-            'message' => 'Xóa bài viết thành công'
+            'message' => 'Xóa bài viết thành công',
         ], 200);
     }
 
@@ -71,11 +85,34 @@ class PostController extends Controller
                 'message' => 'Bạn không có quyền sửa bài viết này',
             ], 403);
         }
-        
-        $post->update([
+
+        $oldThumbnail = $post->thumbnail;
+        $newThumbnail = $request->hasFile('thumbnail')
+            ? $request->file('thumbnail')->store('posts', 'public')
+            : null;
+
+        $updateData = [
             'title' => $input['title'],
             'content' => $input['content'],
-        ]);
+        ];
+
+        if ($newThumbnail) {
+            $updateData['thumbnail'] = $newThumbnail;
+        }
+
+        try {
+            $post->update($updateData);
+        } catch (Throwable $e) {
+            if ($newThumbnail) {
+                Storage::disk('public')->delete($newThumbnail);
+            }
+
+            throw $e;
+        }
+
+        if ($newThumbnail && $oldThumbnail) {
+            Storage::disk('public')->delete($oldThumbnail);
+        }
 
         return response()->json([
             'message' => 'Cập nhật bài viết thành công',
