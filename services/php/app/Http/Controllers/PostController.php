@@ -5,12 +5,14 @@ namespace App\Http\Controllers;
 use App\Http\Requests\Post\CreateRequest;
 use App\Http\Resources\PostResource;
 use App\Models\Post;
-use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Storage;
+use Throwable;
 
 class PostController extends Controller
 {
     public function index()
-    {        
+    {
         $posts = Post::orderByDesc('id')->get();
 
         return response()->json([
@@ -19,28 +21,40 @@ class PostController extends Controller
         ], 200);
     }
 
-    public function store(CreateRequest $request)
+    public function store(CreateRequest $request): JsonResponse
     {
         $input = $request->validated();
         $user = auth()->user();
+        $thumbnail = $request->file('thumbnail')?->store('posts', 'public');
 
-        $data = Post::create([
-            'title' => $input['title'],
-            'content' => $input['content'],
-            'user_id' => $user->id
-        ]);
-        
+        abort_if($thumbnail === false, 500, 'Không thể lưu ảnh thumbnail.');
+
+        try {
+            $data = Post::create([
+                'title' => $input['title'],
+                'content' => $input['content'],
+                'thumbnail' => $thumbnail,
+                'user_id' => $user->id,
+            ]);
+        } catch (Throwable $exception) {
+            if ($thumbnail !== null) {
+                Storage::disk('public')->delete($thumbnail);
+            }
+
+            throw $exception;
+        }
+
         return response()->json([
             'message' => 'Thêm bài viết thành công',
-            'data' => new PostResource($data)
+            'data' => new PostResource($data),
         ], 200);
     }
 
     public function show(Post $post)
-    {        
+    {
         return response()->json([
             'message' => 'lấy bài viết thành công',
-            'data' => new PostResource($post)
+            'data' => new PostResource($post),
         ], 200);
     }
 
@@ -55,13 +69,13 @@ class PostController extends Controller
         }
 
         $post->delete();
-        
+
         return response()->json([
-            'message' => 'Xóa bài viết thành công'
+            'message' => 'Xóa bài viết thành công',
         ], 200);
     }
 
-    public function update(CreateRequest $request, Post $post)
+    public function update(CreateRequest $request, Post $post): JsonResponse
     {
         $input = $request->validated();
         $user = auth()->user();
@@ -71,11 +85,33 @@ class PostController extends Controller
                 'message' => 'Bạn không có quyền sửa bài viết này',
             ], 403);
         }
-        
-        $post->update([
+
+        $data = [
             'title' => $input['title'],
             'content' => $input['content'],
-        ]);
+        ];
+        $oldThumbnail = $post->thumbnail;
+        $thumbnail = $request->file('thumbnail')?->store('posts', 'public');
+
+        abort_if($thumbnail === false, 500, 'Không thể lưu ảnh thumbnail.');
+
+        if ($thumbnail !== null) {
+            $data['thumbnail'] = $thumbnail;
+        }
+
+        try {
+            $post->update($data);
+        } catch (Throwable $exception) {
+            if ($thumbnail !== null) {
+                Storage::disk('public')->delete($thumbnail);
+            }
+
+            throw $exception;
+        }
+
+        if ($thumbnail !== null && $oldThumbnail !== null) {
+            Storage::disk('public')->delete($oldThumbnail);
+        }
 
         return response()->json([
             'message' => 'Cập nhật bài viết thành công',
