@@ -13,10 +13,22 @@ Route::post('login', [AuthController::class, 'login']);
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('users', [AuthController::class, 'getUser']);
     Route::post('logout', [AuthController::class, 'logout']);
+    Route::post('/posts', [PostController::class, 'store']);
+    Route::put('/posts/{post}', [PostController::class, 'update'])
+        ->missing(function () {
+            return response()->json([
+                'message' => 'Không tìm thấy bài viết',
+            ], 404);
+        });
+
+    Route::delete('/posts/{post}', [PostController::class, 'destroy'])->missing(function () {
+        return response()->json([
+            'message' => 'Không tìm thấy bài viết',
+        ], 404);
+    });
 });
 
 Route::get('/posts', [PostController::class, 'index']);
-Route::post('/posts', [PostController::class, 'store']);
 
 Route::get('/posts/{post}', [PostController::class, 'show'])->missing(function () {
     return response()->json([
@@ -24,19 +36,4 @@ Route::get('/posts/{post}', [PostController::class, 'show'])->missing(function (
     ], 404);
 });
 
-Route::delete('/posts/{post}', [PostController::class, 'destroy'])->missing(function () {
-    return response()->json([
-        'message' => 'Không tìm thấy bài viết',
-    ], 404);
-});
 
-Route::put('/users/{user}', [\App\Http\Controllers\UserController::class, 'update'])->missing(function () {
-    return response()->json([
-        'message' => 'Không tìm thấy người dùng',
-    ], 404);
-});
-Route::put('/posts/{post}', [PostController::class, 'update'])->missing(function () {
-    return response()->json([
-        'message' => 'Không tìm thấy bài viết',
-    ], 404);
-});
