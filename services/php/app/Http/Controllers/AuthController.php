@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RegisterRequest;
-use App\Http\Requests\Auth\ResendMailRequest;
 use App\Http\Requests\Auth\VerfiyMailRequest;
+use App\Http\Requests\Auth\ResendMailRequest;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -17,7 +17,7 @@ class AuthController extends Controller
     public function register(RegisterRequest $request)
     {
         $input = $request->validated();
-        $code = random_int(100000, 999999);
+        $code = rand(100000, 999999);
         $expired_at = now()->addMinutes(10);
 
         $user = User::create([
@@ -71,23 +71,34 @@ class AuthController extends Controller
 
     public function resendMail(ResendMailRequest $request)
     {
-        $email = strtolower($request->validated('email'));
-        $user = User::where('email', $email)->first();
+        $input = $request->validated();
+        $user = User::where('email', $input['email'])->first();
 
-        if ($user && !$user->email_verified_at) {
-            $code = random_int(100000, 999999);
-
-            $user->update([
-                'code_verify_email' => Hash::make($code),
-                'expired_verify_email' => now()->addMinutes(10),
-            ]);
-
-            Mail::to($user->email)->queue(new VerfifyCodeRegister($code, $user->name));
+        if (!$user) {
+            return response()->json([
+                'message' => 'email not found',
+            ], 404);
         }
 
+        if ($user->email_verified_at) {
+            return response()->json([
+                'message' => 'email already verified',
+            ], 400);
+        }
+
+        $code = rand(100000, 999999);
+        $expired_at = now()->addMinutes(10);
+
+        $user->update([
+            'code_verify_email' => Hash::make($code),
+            'expired_verify_email' => $expired_at,
+        ]);
+
+        Mail::to($user->email)->queue(new VerfifyCodeRegister($code, $user->name));
+
         return response()->json([
-            'message' => 'If the email is eligible, a verification code has been sent.',
-        ], 202);
+            'message' => 'email resend successfully',
+        ]);
     }
 
     public function login(LoginRequest $request)

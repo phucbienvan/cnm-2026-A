@@ -15,4 +15,19 @@ class UserController extends Controller
             'message' => 'Hello',
         ]);
     }
+
+    public function update(Request $request, User $user)
+    {
+        $validated = $request->validate([
+            'name' => 'sometimes|required|string|max:255',
+            'email' => 'sometimes|required|email|unique:users,email,' . $user->id,
+        ]);
+
+        $user->update($validated);
+
+        return response()->json([
+            'message' => 'Cập nhật thông tin User thành công',
+            'data' => $user,
+        ], 200);
+    }
 }
