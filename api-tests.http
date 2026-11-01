@@ -1,0 +1,133 @@
+### 1. Create Post with Thumbnail
+POST http://localhost:8000/api/posts
+Authorization: Bearer YOUR_TOKEN_HERE
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="title"
+
+Bài viết có thumbnail
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="content"
+
+Đây là nội dung bài viết test với thumbnail
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="thumbnail"; filename="image.jpg"
+Content-Type: image/jpeg
+
+< ./path/to/your/image.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+###
+
+### 2. Create Post without Thumbnail
+POST http://localhost:8000/api/posts
+Authorization: Bearer YOUR_TOKEN_HERE
+Content-Type: application/json
+
+{
+  "title": "Bài viết không có thumbnail",
+  "content": "Đây là nội dung bài viết không có thumbnail"
+}
+
+###
+
+### 3. Get All Posts
+GET http://localhost:8000/api/posts
+Authorization: Bearer YOUR_TOKEN_HERE
+
+###
+
+### 4. Get Single Post
+GET http://localhost:8000/api/posts/1
+Authorization: Bearer YOUR_TOKEN_HERE
+
+###
+
+### 5. Update Post with New Thumbnail
+PUT http://localhost:8000/api/posts/1
+Authorization: Bearer YOUR_TOKEN_HERE
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="title"
+
+Bài viết đã cập nhật
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="content"
+
+Nội dung đã được cập nhật
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="thumbnail"; filename="new-image.jpg"
+Content-Type: image/jpeg
+
+< ./path/to/your/new-image.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+###
+
+### 6. Update Post without changing Thumbnail
+PUT http://localhost:8000/api/posts/1
+Authorization: Bearer YOUR_TOKEN_HERE
+Content-Type: application/json
+
+{
+  "title": "Bài viết cập nhật không đổi thumbnail",
+  "content": "Chỉ cập nhật title và content"
+}
+
+###
+
+### 7. Delete Post (and its thumbnail)
+DELETE http://localhost:8000/api/posts/1
+Authorization: Bearer YOUR_TOKEN_HERE
+
+###
+
+### 8. Test Validation - Invalid File Type
+POST http://localhost:8000/api/posts
+Authorization: Bearer YOUR_TOKEN_HERE
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="title"
+
+Test validation
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="content"
+
+Test content
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="thumbnail"; filename="document.pdf"
+Content-Type: application/pdf
+
+< ./path/to/document.pdf
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+# Expected: 422 Validation Error
+
+###
+
+### 9. Test Validation - File Too Large (>2MB)
+POST http://localhost:8000/api/posts
+Authorization: Bearer YOUR_TOKEN_HERE
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="title"
+
+Test large file
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="content"
+
+Test content
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="thumbnail"; filename="large-image.jpg"
+Content-Type: image/jpeg
+
+< ./path/to/large-image.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+# Expected: 422 Validation Error
+
+###

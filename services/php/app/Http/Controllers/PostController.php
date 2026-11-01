@@ -6,6 +6,7 @@ use App\Http\Requests\Post\CreateRequest;
 use App\Http\Resources\PostResource;
 use App\Models\Post;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class PostController extends Controller
 {
@@ -24,15 +25,22 @@ class PostController extends Controller
         $input = $request->validated();
         $user = auth()->user();
 
+        $thumbnailPath = null;
+        if ($request->hasFile('thumbnail')) {
+            $thumbnailPath = $request->file('thumbnail')
+                ->store('post-thumbnails', 'public');
+        }
+
         $data = Post::create([
-            'title' => $input['title'],
-            'content' => $input['content'],
-            'user_id' => $user->id
+            'title'     => $input['title'],
+            'content'   => $input['content'],
+            'user_id'   => $user->id,
+            'thumbnail' => $thumbnailPath,
         ]);
         
         return response()->json([
             'message' => 'Thêm bài viết thành công',
-            'data' => new PostResource($data)
+            'data'    => new PostResource($data),
         ], 200);
     }
 
@@ -54,6 +62,11 @@ class PostController extends Controller
             ], 403);
         }
 
+        // Xóa thumbnail nếu có
+        if ($post->thumbnail) {
+            Storage::disk('public')->delete($post->thumbnail);
+        }
+
         $post->delete();
         
         return response()->json([
@@ -71,15 +84,27 @@ class PostController extends Controller
                 'message' => 'Bạn không có quyền sửa bài viết này',
             ], 403);
         }
-        
-        $post->update([
-            'title' => $input['title'],
+
+        $updateData = [
+            'title'   => $input['title'],
             'content' => $input['content'],
-        ]);
+        ];
+
+        // Xử lý thumbnail mới nếu có
+        if ($request->hasFile('thumbnail')) {
+            // Xóa thumbnail cũ
+            if ($post->thumbnail) {
+                Storage::disk('public')->delete($post->thumbnail);
+            }
+            $updateData['thumbnail'] = $request->file('thumbnail')
+                ->store('post-thumbnails', 'public');
+        }
+
+        $post->update($updateData);
 
         return response()->json([
             'message' => 'Cập nhật bài viết thành công',
-            'data' => new PostResource($post),
+            'data'    => new PostResource($post),
         ], 200);
     }
 }
