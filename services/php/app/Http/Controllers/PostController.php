@@ -25,22 +25,22 @@ class PostController extends Controller
         $input = $request->validated();
         $user = auth()->user();
 
-        // Xử lý upload thumbnail
+        $thumbnailPath = null;
         if ($request->hasFile('thumbnail')) {
-            $input['thumbnail'] = $request->file('thumbnail')
+            $thumbnailPath = $request->file('thumbnail')
                 ->store('post-thumbnails', 'public');
         }
 
         $data = Post::create([
-            'title' => $input['title'],
-            'content' => $input['content'],
-            'thumbnail' => $input['thumbnail'] ?? null,
-            'user_id' => $user->id
+            'title'     => $input['title'],
+            'content'   => $input['content'],
+            'user_id'   => $user->id,
+            'thumbnail' => $thumbnailPath,
         ]);
         
         return response()->json([
             'message' => 'Thêm bài viết thành công',
-            'data' => new PostResource($data)
+            'data'    => new PostResource($data),
         ], 200);
     }
 
@@ -85,26 +85,26 @@ class PostController extends Controller
             ], 403);
         }
 
-        // Xử lý upload thumbnail mới
+        $updateData = [
+            'title'   => $input['title'],
+            'content' => $input['content'],
+        ];
+
+        // Xử lý thumbnail mới nếu có
         if ($request->hasFile('thumbnail')) {
-            // Xóa thumbnail cũ nếu có
+            // Xóa thumbnail cũ
             if ($post->thumbnail) {
                 Storage::disk('public')->delete($post->thumbnail);
             }
-            
-            $input['thumbnail'] = $request->file('thumbnail')
+            $updateData['thumbnail'] = $request->file('thumbnail')
                 ->store('post-thumbnails', 'public');
         }
-        
-        $post->update([
-            'title' => $input['title'],
-            'content' => $input['content'],
-            'thumbnail' => $input['thumbnail'] ?? $post->thumbnail,
-        ]);
+
+        $post->update($updateData);
 
         return response()->json([
             'message' => 'Cập nhật bài viết thành công',
-            'data' => new PostResource($post),
+            'data'    => new PostResource($post),
         ], 200);
     }
 }
