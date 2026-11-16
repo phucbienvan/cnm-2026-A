@@ -4,17 +4,15 @@ namespace App\Service;
  
 use App\Models\Product;
 use App\Models\Category;
-use App\Models\Tag;
 
 Class ProductService
 {
-    protected $product, $category , $tag;
+    protected $product, $category;
  
-    public function __construct(Product $product ,Category $category , Tag $tag)
+    public function __construct(Product $product ,Category $category)
     {
         $this->product = $product;
         $this->category = $category;
-        $this->tag = $tag;
     }
 
     public function createProduct( $params )
