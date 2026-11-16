@@ -5,130 +5,114 @@ namespace App\Service;
 use App\Models\Product;
 use App\Models\Category;
 use App\Models\Tag;
- 
- 
-Class productService
-{
-    protected $Product;
-    protected $Category , $Tag ;
- 
-    public function __construct(
-        Product $Product ,Category $Category , Tag $Tag){
-        $this->Product = $Product;
-        $this->Category = $Category;
-        $this->Tag=$Tag;
-    }
- 
 
-    public function createproduct( $param ){
+Class ProductService
+{
+    protected $product, $category , $tag;
+ 
+    public function __construct(Product $product ,Category $category , Tag $tag)
+    {
+        $this->product = $product;
+        $this->category = $category;
+        $this->tag = $tag;
+    }
+
+    public function createProduct( $params )
+    {
         $product = array(
-            'title'=> $param["title"],
-            'price' => isset($param["price"])? $param["price"]:null,
+            'title'=> $params['title'],
+            'price' => isset($params['price'])? $params['price'] : null,
         );
- 
-        //check description
-        if($param["description"]){
-        $product["description"] = $param["description"];
+
+        if ($params['description']){
+            $product['description'] = $params['description'];
         }
  
-        $this->Product->create($product); return true;
+        $this->product->create($product);
+
+        return true;
     }
-    public function FIND($id){
-        $Product = $this->Product->find($id);
+
+    public function find($id)
+    {
+        $product = $this->product->find($id);
  
-        if(!$Product) return null;
- 
-        if($Product->status == 'active'){
-            return $Product;
-        }else{
-            return FALSE;
+        if(!$product) {
+            return null;
         }
+ 
+        if ($product->status !== 'active') {
+            return false;
+        }
+
+        return $product;
     }
  
-    public function getByCategory($category){
-        if(gettype($category) == "string"){
-            $category = $this->Category
-                ->where("name",$category)
+    public function getByCategory($category)
+    {
+        if (gettype($category) == 'string') {
+            $category = $this->category
+                ->where('name', $category)
                 ->first();
         }
  
-        $Products = $this->Product->where('category_id',$category->id)
-            ->with("tags")
-            ->orderBy( 'created_at','desc')
+        $products = $this->product->where('category_id', $category->id)
+            ->with('tags')
+            ->orderByDesc('created_at')
             ->paginate();
- 
-        return $Products ;
+
+        return $products;
     }
+
     public function update($product, $data){
         if(is_array($product)){
-            $product = $this->Product->find($product["id"]);
+            $product = $this->product->find($product['id']);
         }
  
-        foreach($data as $Key=>$Val)
-        {
-            $product->$Key=$Val ;
+        foreach($data as $key => $value){
+            $product->$key = $value;
         }
  
         return $product->save();
     }
- 
 
-    public function search_product($param){
-        $Query = $this->Product->newQuery();
+    public function searchProduct($params)
+    {
+        $query = $this->product->newQuery();
+        $status = $params['status'] ?? 'inactive';
  
-        //set status
-        if(isset($param["status"])){
-            if($param["status"] == "inactive"){
-                $Status = "active";
-            }else{
-                $Status = $param["status"];
-            }
-        }else{
-            $Status = "inactive";
+        $query->where('status', $status);
+ 
+        if (!empty($params['category_id'])) {
+            $query->where('category_id', $params['category_id']);
         }
  
-        $Query->where("status",$Status);
- 
-        if(!empty($param["category_id"])){
-            $Query->where("category_id",$param["category_id"]);
-        }
- 
-        //filter price
-        if(!empty($param["min_price"])){
-            if(!empty($param["max_price"])){
-                $Query->whereBetween("price", [
-                    $param["min_price"],
-                    $param["max_price"]
+        if (!empty($params['min_price'])) {
+            if(!empty($params['max_price'])){
+                $query->whereBetween('price', [
+                    $params['min_price'],
+                    $params['max_price']
                 ]);
             }else{
-                $Query->where("price",">",$param["min_price"]);
+                $query->where('price', '>', $params['min_price']);
             }
         }
  
-        if($param["keyword"]){
-            $KeyWord = trim($param["keyword"]);
+        if ($params['keyword']) {
+            $keyword = trim($params['keyword']);
  
-            $Query->where("title","like",$KeyWord."%");
-            $Query->orWhere(
-                "description",
-                "like",
-                "%".$KeyWord."%"
-            );
+            $query->where('title', 'like', $keyword . '%');
+            $query->orWhere('description', 'like', '%' . $keyword . '%');
         }
  
-        if(isset($param["per_page"])){
-            $PerPage = $param["per_page"];
-        }else{
-            $PerPage = 50;
+        if (isset($params['per_page'])){
+            $perPage = $params['per_page'];
+        } else {
+            $perPage = 50;
         }
  
-        //get results
-        $Result = $Query
-            ->orderBy("created_at","asc")
-            ->paginate($PerPage);
- 
-        return $Result;
+        $result = $query->orderByAsc('created_at')->paginate($perPage);
+
+        return $result;
     }
 }
- 
- 
