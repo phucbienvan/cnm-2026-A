@@ -23,8 +23,9 @@ class CreateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'title' => 'required|max:255',
-            'content' => 'required',
+            'title' => ['required', 'max:255'],
+            'content' => ['required'],
+            'thumbnail' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
         ];
     }
 }
